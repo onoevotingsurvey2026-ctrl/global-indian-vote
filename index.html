@@ -6,7 +6,6 @@
 
 <title>Global Indian Vote 2026</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
@@ -34,7 +33,6 @@ input{
     margin-top:10px;
     border:1px solid #ccc;
     border-radius:8px;
-    font-size:16px;
 }
 
 button{
@@ -49,14 +47,10 @@ button{
     cursor:pointer;
 }
 
-h2{
-    margin-bottom:20px;
-}
-
 #message{
     margin-top:15px;
-    font-weight:bold;
     color:green;
+    font-weight:bold;
 }
 
 </style>
@@ -72,9 +66,7 @@ h2{
 
 <input type="password" id="password" placeholder="Enter Password">
 
-<button onclick="login()">
-Login
-</button>
+<button onclick="login()">Login</button>
 
 <div id="message"></div>
 
@@ -82,7 +74,6 @@ Login
 
 <script>
 
-// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -93,18 +84,27 @@ const firebaseConfig = {
   appId: "1:181065724520:web:f72a93869786373c1101dd"
 };
 
-// 🔥 Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-// 🔐 LOGIN + AUTO SIGNUP
+// AUTO LOGIN REDIRECT
+auth.onAuthStateChanged((user) => {
+
+    if(user){
+
+        window.location.href = "dashboard.html";
+
+    }
+
+});
+
+// LOGIN + AUTO SIGNUP
 function login(){
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
-    // 🔥 LOGIN
     auth.signInWithEmailAndPassword(email, password)
 
     .then(() => {
@@ -122,7 +122,6 @@ function login(){
 
     .catch((error) => {
 
-        // 🔥 AUTO CREATE ACCOUNT
         if(
             error.code === "auth/user-not-found" ||
             error.code === "auth/invalid-credential"
