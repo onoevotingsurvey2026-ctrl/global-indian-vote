@@ -36,10 +36,17 @@ button{
     cursor:pointer;
     background:#0d6efd;
     color:white;
+    font-size:16px;
 }
 
 #submitBtn{
     width:100%;
+    background:#198754;
+}
+
+.disabled{
+    opacity:0.5;
+    pointer-events:none;
 }
 
 </style>
@@ -50,6 +57,8 @@ button{
 <div class="container">
 
 <h2>🗳 Vote Now</h2>
+
+<div id="voteSection">
 
 <button onclick="selectCandidate('A')">
 Candidate A
@@ -71,8 +80,13 @@ Submit Vote
 
 </div>
 
+<h3 id="message"></h3>
+
+</div>
+
 <script>
 
+// FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -83,6 +97,7 @@ const firebaseConfig = {
   appId: "1:181065724520:web:f72a93869786373c1101dd"
 };
 
+// INIT
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
@@ -90,14 +105,31 @@ const db = firebase.firestore();
 
 let selectedCandidate = "";
 
-// AUTH CHECK
+// LOGIN CHECK
 auth.onAuthStateChanged((user) => {
 
     if(!user){
 
         window.location.href = "index.html";
+        return;
 
     }
+
+    // CHECK ALREADY VOTED
+    db.collection("votes").doc(user.uid).get()
+
+    .then((doc) => {
+
+        if(doc.exists){
+
+            document.getElementById("voteSection").innerHTML = "";
+
+            document.getElementById("message").innerHTML =
+            "✅ You already voted successfully";
+
+        }
+
+    });
 
 });
 
@@ -110,47 +142,65 @@ function selectCandidate(value){
 
 }
 
-// SUBMIT VOTE
+// SUBMIT
 function submitVote(){
 
     const user = auth.currentUser;
 
     if(!user){
 
-        alert("Login Required");
+        alert("Please Login");
         return;
 
     }
 
+    if(selectedCandidate === ""){
+
+        alert("Please Select Candidate");
+        return;
+
+    }
+
+    // FINAL DUPLICATE CHECK
     db.collection("votes").doc(user.uid).get()
 
     .then((doc) => {
 
+        // ALREADY VOTED
         if(doc.exists){
 
-            alert("✅ You already voted successfully");
+            document.getElementById("voteSection").innerHTML = "";
+
+            document.getElementById("message").innerHTML =
+            "✅ You already voted successfully";
+
+            return;
 
         }
 
-        else{
+        // SAVE VOTE
+        db.collection("votes").doc(user.uid).set({
 
-            db.collection("votes").doc(user.uid).set({
+            candidate: selectedCandidate,
+            email: user.email,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
 
-                candidate: selectedCandidate,
-                email: user.email,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        })
 
-            })
+        .then(() => {
 
-            .then(() => {
+            document.getElementById("voteSection").innerHTML = "";
 
-                alert("🎉 Vote Submitted Successfully");
+            document.getElementById("message").innerHTML =
+            "🎉 Vote Submitted Successfully";
+
+            setTimeout(() => {
 
                 window.location.href = "results.html";
 
-            });
+            }, 1500);
 
-        }
+        });
 
     });
 
