@@ -2,87 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Global Indian Vote 2026</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vote Page</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 
 <style>
-body{
-    font-family: Arial;
-    background:#f4f6f9;
-    margin:0;
-    text-align:center;
-}
-
-header{
-    background:#1e3a8a;
-    color:white;
-    padding:15px;
-}
-
-.card{
-    background:white;
-    margin:20px auto;
-    padding:20px;
-    max-width:400px;
-    border-radius:10px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-button{
-    padding:10px;
-    margin:10px;
-    width:80%;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-}
-
-.candidate{
-    background:#e5e7eb;
-}
-
-.candidate.selected{
-    background:#10b981;
-    color:white;
-}
-
-#submitBtn{
-    background:#1e3a8a;
-    color:white;
-}
-
-#submitBtn:disabled{
-    background:gray;
-}
+body{text-align:center;font-family:Arial;}
+button{padding:10px;margin:10px;}
+.selected{background:green;color:white;}
 </style>
 </head>
 
 <body>
 
-<header>
-<h2>🇮🇳 Global Indian Vote 2026</h2>
-</header>
+<h2>Vote Now</h2>
 
-<div class="card">
-<h3>Select Your Candidate</h3>
-
-<button class="candidate" onclick="selectCandidate('A')" id="A">Candidate A</button>
-<button class="candidate" onclick="selectCandidate('B')" id="B">Candidate B</button>
-<button class="candidate" onclick="selectCandidate('C')" id="C">Candidate C</button>
+<button onclick="selectCandidate('A')" id="A">Candidate A</button>
+<button onclick="selectCandidate('B')" id="B">Candidate B</button>
+<button onclick="selectCandidate('C')" id="C">Candidate C</button>
 
 <br>
 
-<button id="submitBtn" disabled onclick="submitVote()">SUBMIT VOTE</button>
-</div>
+<button id="submitBtn" disabled onclick="submitVote()">Submit Vote</button>
 
 <script>
-let selectedCandidate = "";
-
-// 🔥 Firebase Config (PUT YOUR KEY HERE)
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -97,33 +42,38 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// 🟢 Selection Logic
+let selectedCandidate = "";
+
+// 🔐 AUTH GUARD
+firebase.auth().onAuthStateChanged((user) => {
+    if (!user) {
+        window.location.href = "index.html";
+    }
+});
+
+// Candidate select
 function selectCandidate(value){
-
     selectedCandidate = value;
-
     document.getElementById("submitBtn").disabled = false;
 
-    // highlight UI
-    document.getElementById("A").classList.remove("selected");
-    document.getElementById("B").classList.remove("selected");
-    document.getElementById("C").classList.remove("selected");
+    ["A","B","C"].forEach(id=>{
+        document.getElementById(id).classList.remove("selected");
+    });
 
     document.getElementById(value).classList.add("selected");
 }
 
-// 🟢 Submit Vote (Firestore Save)
+// Submit vote
 function submitVote(){
-
-    if(!selectedCandidate){
-        alert("Please select a candidate");
-        return;
-    }
-
     let user = auth.currentUser;
 
     if(!user){
         alert("Login required");
+        return;
+    }
+
+    if(!selectedCandidate){
+        alert("Select candidate");
         return;
     }
 
@@ -133,9 +83,7 @@ function submitVote(){
         mobile: "NOT_ADDED",
         timestamp: new Date()
     }).then(()=>{
-        alert("Vote Submitted Successfully 🚀");
-    }).catch((error)=>{
-        alert(error.message);
+        alert("Vote Submitted Successfully");
     });
 }
 </script>
