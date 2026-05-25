@@ -1,79 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ONE VOTE SYSTEM - FINAL</title>
 
-<title>Global Indian Vote 2026</title>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
+  <!-- PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-body{
-    font-family:Arial;
-    background:#f4f6f9;
-    text-align:center;
-    padding-top:50px;
-}
-
-.container{
-    width:350px;
-    margin:auto;
-    background:white;
-    padding:30px;
-    border-radius:10px;
-    box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
-
-input{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border:1px solid #ccc;
-    border-radius:8px;
-}
-
-button{
-    width:100%;
-    padding:12px;
-    margin-top:15px;
-    border:none;
-    border-radius:8px;
-    background:#0d6efd;
-    color:white;
-    font-size:16px;
-    cursor:pointer;
-}
-
-#message{
-    margin-top:15px;
-    color:green;
-    font-weight:bold;
-}
-
-</style>
+  <style>
+    body { font-family: Arial; text-align:center; background:#f4f4f4; }
+    button { padding:10px 15px; margin:5px; cursor:pointer; }
+    canvas { max-width:500px; margin:20px auto; }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+<h2>LIVE ELECTION VOTING SYSTEM</h2>
 
-<h2>🇮🇳 Global Indian Vote 2026</h2>
+<div id="userBox">Not logged in</div>
 
-<input type="email" id="email" placeholder="Enter Gmail ID">
+<button onclick="vote('A')">Candidate A</button>
+<button onclick="vote('B')">Candidate B</button>
+<button onclick="vote('C')">Candidate C</button>
 
-<input type="password" id="password" placeholder="Enter Password">
+<br><br>
 
-<button onclick="login()">Login</button>
+<canvas id="pieChart"></canvas>
+<canvas id="barChart"></canvas>
 
-<div id="message"></div>
-
-</div>
+<br>
+<button onclick="downloadReport()">Download PDF Report</button>
 
 <script>
-
+/* 🔥 FIREBASE CONFIG - REPLACE YOUR DETAILS */
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -87,77 +54,124 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
+const db = firebase.database();
 
-// AUTO LOGIN REDIRECT
-auth.onAuthStateChanged((user) => {
+let currentUser = null;
 
-    if(user){
+/* 🔐 LOGIN */
+auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
+.then(res => {
+  currentUser = res.user;
 
-        window.location.href = "dashboard.html";
+  document.getElementById("userBox").innerHTML =
+    "Logged in: " + currentUser.email;
 
-    }
-
+  checkAlreadyVoted();
+  updateCharts();
 });
 
-// LOGIN + AUTO SIGNUP
-function login(){
+/* 🚫 CHECK ALREADY VOTED */
+function checkAlreadyVoted() {
+  db.ref("votes/" + currentUser.uid).once("value", snap => {
+    if (snap.exists()) {
+      alert("You have already voted. Access restricted.");
+    }
+  });
+}
 
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
+/* 🗳️ VOTE FUNCTION (ONLY ONCE) */
+function vote(candidate) {
+  const uid = currentUser.uid;
 
-    auth.signInWithEmailAndPassword(email, password)
+  db.ref("votes/" + uid).once("value", snap => {
+    if (snap.exists()) {
+      alert("❌ Vote already submitted. Only one vote allowed.");
+      return;
+    }
 
-    .then(() => {
-
-        document.getElementById("message").innerHTML =
-        "✅ Login Success";
-
-        setTimeout(() => {
-
-            window.location.href = "dashboard.html";
-
-        }, 1000);
-
-    })
-
-    .catch((error) => {
-
-        if(
-            error.code === "auth/user-not-found" ||
-            error.code === "auth/invalid-credential"
-        ){
-
-            auth.createUserWithEmailAndPassword(email, password)
-
-            .then(() => {
-
-                document.getElementById("message").innerHTML =
-                "✅ Account Created Successfully";
-
-                setTimeout(() => {
-
-                    window.location.href = "dashboard.html";
-
-                }, 1000);
-
-            })
-
-            .catch((err) => {
-
-                alert(err.message);
-
-            });
-
-        }
-        else{
-
-            alert(error.message);
-
-        }
-
+    db.ref("votes/" + uid).set({
+      email: currentUser.email,
+      candidate: candidate,
+      timestamp: new Date().toLocaleString()
     });
 
+    alert("✅ Vote submitted successfully!");
+    updateCharts();
+  });
 }
+
+/* 📊 CHART VARIABLES */
+let pieChart, barChart;
+
+/* 📊 UPDATE CHART DATA */
+function updateCharts() {
+  db.ref("votes").once("value", snap => {
+
+    let result = { A:0, B:0, C:0 };
+
+    snap.forEach(child => {
+      let v = child.val();
+      if (v.candidate) result[v.candidate]++;
+    });
+
+    drawCharts(result);
+  });
+}
+
+/* 📈 DRAW CHARTS */
+function drawCharts(data) {
+
+  if (pieChart) pieChart.destroy();
+  if (barChart) barChart.destroy();
+
+  pieChart = new Chart(document.getElementById("pieChart"), {
+    type: "pie",
+    data: {
+      labels: ["A", "B", "C"],
+      datasets: [{
+        data: [data.A, data.B, data.C]
+      }]
+    }
+  });
+
+  barChart = new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+      labels: ["A", "B", "C"],
+      datasets: [{
+        data: [data.A, data.B, data.C]
+      }]
+    }
+  });
+}
+
+/* 📥 DOWNLOAD PDF REPORT */
+function downloadReport() {
+  db.ref("votes").once("value", snap => {
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let y = 10;
+
+    doc.text("ELECTION VOTE REPORT", 10, y);
+    y += 10;
+
+    snap.forEach(child => {
+      let v = child.val();
+      doc.text(
+        v.email + " | " + v.candidate + " | " + v.timestamp,
+        10, y
+      );
+      y += 10;
+    });
+
+    doc.save("vote_report.pdf");
+  });
+}
+
+/* 🔄 AUTO REFRESH LIVE RESULTS */
+setInterval(updateCharts, 3000);
 
 </script>
 
