@@ -52,7 +52,7 @@ button{
 <button onclick="login()">Login</button>
 </div>
 
-<!-- 🔥 Firebase Config START -->
+<!-- 🔥 FIREBASE CONFIG (PASTE YOUR KEYS HERE) -->
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
@@ -64,11 +64,8 @@ const firebaseConfig = {
   appId: "1:181065724520:web:f72a93869786373c1101dd"
 };
 </script>
-<!-- 🔥 Firebase Config END -->
 
 <script>
-// SIMPLE LOGIN (safe + GitHub compatible)
-
 function login(){
 
   let email = document.getElementById("email").value;
@@ -82,17 +79,16 @@ function login(){
 
   if(email.includes("@") && password.length >= 4){
 
-    // store user data
     localStorage.setItem("user", email);
     localStorage.setItem("mobile", mobile);
 
     alert("Login Success 🚀");
 
-    // IMPORTANT FIX: dashboard file must exist in GitHub
+    // redirect to dashboard
     window.location.href = "dashboard.html";
 
   } else {
-    alert("Invalid login details");
+    alert("Invalid login");
   }
 }
 </script>
