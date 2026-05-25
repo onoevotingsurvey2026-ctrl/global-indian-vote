@@ -98,12 +98,13 @@ firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
-// 🔐 LOGIN FUNCTION
+// 🔐 LOGIN + AUTO SIGNUP
 function login(){
 
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
 
+    // 🔥 LOGIN
     auth.signInWithEmailAndPassword(email, password)
 
     .then(() => {
@@ -111,7 +112,6 @@ function login(){
         document.getElementById("message").innerHTML =
         "✅ Login Success";
 
-        // 🚀 Redirect
         setTimeout(() => {
 
             window.location.href = "dashboard.html";
@@ -122,7 +122,39 @@ function login(){
 
     .catch((error) => {
 
-        alert(error.message);
+        // 🔥 AUTO CREATE ACCOUNT
+        if(
+            error.code === "auth/user-not-found" ||
+            error.code === "auth/invalid-credential"
+        ){
+
+            auth.createUserWithEmailAndPassword(email, password)
+
+            .then(() => {
+
+                document.getElementById("message").innerHTML =
+                "✅ Account Created Successfully";
+
+                setTimeout(() => {
+
+                    window.location.href = "dashboard.html";
+
+                }, 1000);
+
+            })
+
+            .catch((err) => {
+
+                alert(err.message);
+
+            });
+
+        }
+        else{
+
+            alert(error.message);
+
+        }
 
     });
 
