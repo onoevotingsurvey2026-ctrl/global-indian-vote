@@ -1,17 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <title>Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+
+<style>
+body{font-family:Arial;text-align:center;background:#f4f6f9;}
+button{padding:10px;margin:10px;}
+</style>
 </head>
 
-<body style="text-align:center;font-family:Arial;background:#f4f6f9">
+<body>
 
-<h1>🗳️ Dashboard Working Successfully 🚀</h1>
+<h2>Dashboard</h2>
 
-<p>Login → Redirect fixed</p>
+<button onclick="location.href='vote.html'">Go to Vote</button>
+<button onclick="location.href='results.html'">Live Results</button>
+<button onclick="logout()">Logout</button>
 
-<a href="index.html">⬅ Back to Login</a>
+<script>
+// Firebase Config (ADD YOUR KEY)
+const firebaseConfig = {
+  apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
+  authDomain: "onoevote2026.firebaseapp.com",
+  databaseURL: "https://onoevote2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "onoevote2026",
+  storageBucket: "onoevote2026.firebasestorage.app",
+  messagingSenderId: "181065724520",
+  appId: "1:181065724520:web:f72a93869786373c1101dd"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// 🔐 AUTH GUARD
+firebase.auth().onAuthStateChanged((user) => {
+    if (!user) {
+        window.location.href = "index.html";
+    }
+});
+
+// 🔐 LOGOUT
+function logout(){
+    firebase.auth().signOut().then(() => {
+        window.location.href = "index.html";
+    });
+}
+</script>
 
 </body>
 </html>
