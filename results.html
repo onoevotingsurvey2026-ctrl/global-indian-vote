@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Live Results</title>
+<title>Live Election Results</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -12,6 +12,9 @@
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
 
@@ -24,7 +27,7 @@ body{
 
 .container{
     width:90%;
-    max-width:800px;
+    max-width:900px;
     margin:auto;
     background:white;
     padding:20px;
@@ -32,24 +35,51 @@ body{
     box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
 
+h2{
+    margin-bottom:20px;
+}
+
 .counts{
     display:flex;
-    justify-content:space-around;
-    margin-top:20px;
+    justify-content:center;
     flex-wrap:wrap;
+    gap:20px;
 }
 
 .card{
     background:#0d6efd;
     color:white;
     padding:20px;
-    margin:10px;
     border-radius:10px;
-    width:150px;
+    width:180px;
 }
 
-canvas{
+.card h1{
+    font-size:40px;
+}
+
+.total{
+    margin-top:20px;
+    font-size:24px;
+    font-weight:bold;
+    color:#333;
+}
+
+.chart-container{
+    width:100%;
+    height:350px;
     margin-top:30px;
+}
+
+button{
+    padding:12px 20px;
+    margin-top:30px;
+    border:none;
+    border-radius:8px;
+    background:green;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
 }
 
 </style>
@@ -80,9 +110,21 @@ canvas{
 
 </div>
 
-<canvas id="barChart"></canvas>
+<div class="total">
+Total Votes: <span id="totalVotes">0</span>
+</div>
 
+<div class="chart-container">
+<canvas id="barChart"></canvas>
+</div>
+
+<div class="chart-container">
 <canvas id="pieChart"></canvas>
+</div>
+
+<button onclick="downloadPDF()">
+⬇ Download PDF Report
+</button>
 
 </div>
 
@@ -107,7 +149,12 @@ const db = firebase.firestore();
 let barChart;
 let pieChart;
 
-// 🔥 REALTIME RESULTS
+let finalA = 0;
+let finalB = 0;
+let finalC = 0;
+let finalTotal = 0;
+
+// 🔥 REALTIME FIREBASE
 db.collection("votes").onSnapshot((snapshot) => {
 
     let countA = 0;
@@ -132,10 +179,20 @@ db.collection("votes").onSnapshot((snapshot) => {
 
     });
 
-    // 🔥 Update UI
+    const totalVotes = countA + countB + countC;
+
+    // 🔥 STORE VALUES
+    finalA = countA;
+    finalB = countB;
+    finalC = countC;
+    finalTotal = totalVotes;
+
+    // 🔥 UPDATE UI
     document.getElementById("countA").innerHTML = countA;
     document.getElementById("countB").innerHTML = countB;
     document.getElementById("countC").innerHTML = countC;
+
+    document.getElementById("totalVotes").innerHTML = totalVotes;
 
     updateCharts(countA, countB, countC);
 
@@ -144,7 +201,7 @@ db.collection("votes").onSnapshot((snapshot) => {
 // 🔥 UPDATE CHARTS
 function updateCharts(a, b, c){
 
-    const dataValues = [a, b, c];
+    const values = [a, b, c];
 
     // BAR CHART
     if(barChart){
@@ -165,12 +222,18 @@ function updateCharts(a, b, c){
 
                 label: "Votes",
 
-                data: dataValues,
+                data: values,
 
                 borderWidth: 1
 
             }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
         }
+
     });
 
     // PIE CHART
@@ -190,11 +253,47 @@ function updateCharts(a, b, c){
 
             datasets: [{
 
-                data: dataValues
+                data: values
 
             }]
+        },
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
         }
+
     });
+
+}
+
+// 🔥 DOWNLOAD PDF
+function downloadPDF(){
+
+    const { jsPDF } = window.jspdf;
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+
+    doc.text("Live Election Report", 20, 20);
+
+    doc.setFontSize(14);
+
+    doc.text("Candidate A Votes: " + finalA, 20, 50);
+
+    doc.text("Candidate B Votes: " + finalB, 20, 70);
+
+    doc.text("Candidate C Votes: " + finalC, 20, 90);
+
+    doc.text("Total Votes: " + finalTotal, 20, 120);
+
+    doc.text("Generated Time:", 20, 150);
+
+    doc.text(new Date().toLocaleString(), 20, 165);
+
+    doc.save("Election_Report.pdf");
+
 }
 
 </script>
