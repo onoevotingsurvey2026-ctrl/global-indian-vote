@@ -4,16 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Live Election Results</title>
+<title>Live Results</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- jsPDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
@@ -35,51 +32,33 @@ body{
     box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
 
-h2{
-    margin-bottom:20px;
-}
-
 .counts{
     display:flex;
     justify-content:center;
     flex-wrap:wrap;
-    gap:20px;
 }
 
 .card{
     background:#0d6efd;
     color:white;
     padding:20px;
+    margin:10px;
     border-radius:10px;
-    width:180px;
+    width:160px;
 }
 
-.card h1{
-    font-size:40px;
-}
-
-.total{
-    margin-top:20px;
-    font-size:24px;
-    font-weight:bold;
-    color:#333;
-}
-
-.chart-container{
-    width:100%;
-    height:350px;
+canvas{
     margin-top:30px;
 }
 
 button{
     padding:12px 20px;
-    margin-top:30px;
     border:none;
     border-radius:8px;
-    background:green;
+    background:#198754;
     color:white;
-    font-size:16px;
     cursor:pointer;
+    margin-top:20px;
 }
 
 </style>
@@ -108,19 +87,16 @@ button{
 <h1 id="countC">0</h1>
 </div>
 
+<div class="card">
+<h3>Total Votes</h3>
+<h1 id="totalVotes">0</h1>
 </div>
 
-<div class="total">
-Total Votes: <span id="totalVotes">0</span>
 </div>
 
-<div class="chart-container">
-<canvas id="barChart"></canvas>
-</div>
+<canvas id="barChart" height="120"></canvas>
 
-<div class="chart-container">
-<canvas id="pieChart"></canvas>
-</div>
+<canvas id="pieChart" height="120"></canvas>
 
 <button onclick="downloadPDF()">
 ⬇ Download PDF Report
@@ -130,7 +106,6 @@ Total Votes: <span id="totalVotes">0</span>
 
 <script>
 
-// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -141,25 +116,23 @@ const firebaseConfig = {
   appId: "1:181065724520:web:f72a93869786373c1101dd"
 };
 
-// 🔥 Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
 const db = firebase.firestore();
 
+let countA = 0;
+let countB = 0;
+let countC = 0;
+
 let barChart;
 let pieChart;
 
-let finalA = 0;
-let finalB = 0;
-let finalC = 0;
-let finalTotal = 0;
-
-// 🔥 REALTIME FIREBASE
+// REALTIME RESULTS
 db.collection("votes").onSnapshot((snapshot) => {
 
-    let countA = 0;
-    let countB = 0;
-    let countC = 0;
+    countA = 0;
+    countB = 0;
+    countC = 0;
 
     snapshot.forEach((doc) => {
 
@@ -169,11 +142,11 @@ db.collection("votes").onSnapshot((snapshot) => {
             countA++;
         }
 
-        else if(data.candidate === "B"){
+        if(data.candidate === "B"){
             countB++;
         }
 
-        else if(data.candidate === "C"){
+        if(data.candidate === "C"){
             countC++;
         }
 
@@ -181,29 +154,21 @@ db.collection("votes").onSnapshot((snapshot) => {
 
     const totalVotes = countA + countB + countC;
 
-    // 🔥 STORE VALUES
-    finalA = countA;
-    finalB = countB;
-    finalC = countC;
-    finalTotal = totalVotes;
-
-    // 🔥 UPDATE UI
     document.getElementById("countA").innerHTML = countA;
     document.getElementById("countB").innerHTML = countB;
     document.getElementById("countC").innerHTML = countC;
 
     document.getElementById("totalVotes").innerHTML = totalVotes;
 
-    updateCharts(countA, countB, countC);
+    updateCharts();
 
 });
 
-// 🔥 UPDATE CHARTS
-function updateCharts(a, b, c){
+// CHARTS
+function updateCharts(){
 
-    const values = [a, b, c];
+    const values = [countA, countB, countC];
 
-    // BAR CHART
     if(barChart){
         barChart.destroy();
     }
@@ -216,16 +181,12 @@ function updateCharts(a, b, c){
 
         data: {
 
-            labels: ["Candidate A", "Candidate B", "Candidate C"],
+            labels: ["Candidate A","Candidate B","Candidate C"],
 
             datasets: [{
-
                 label: "Votes",
-
                 data: values,
-
                 borderWidth: 1
-
             }]
         },
 
@@ -236,7 +197,6 @@ function updateCharts(a, b, c){
 
     });
 
-    // PIE CHART
     if(pieChart){
         pieChart.destroy();
     }
@@ -249,12 +209,10 @@ function updateCharts(a, b, c){
 
         data: {
 
-            labels: ["Candidate A", "Candidate B", "Candidate C"],
+            labels: ["Candidate A","Candidate B","Candidate C"],
 
             datasets: [{
-
                 data: values
-
             }]
         },
 
@@ -267,30 +225,24 @@ function updateCharts(a, b, c){
 
 }
 
-// 🔥 DOWNLOAD PDF
+// PDF DOWNLOAD
 function downloadPDF(){
 
     const { jsPDF } = window.jspdf;
 
     const doc = new jsPDF();
 
-    doc.setFontSize(20);
+    const totalVotes = countA + countB + countC;
 
     doc.text("Live Election Report", 20, 20);
 
-    doc.setFontSize(14);
+    doc.text("Candidate A Votes: " + countA, 20, 50);
 
-    doc.text("Candidate A Votes: " + finalA, 20, 50);
+    doc.text("Candidate B Votes: " + countB, 20, 70);
 
-    doc.text("Candidate B Votes: " + finalB, 20, 70);
+    doc.text("Candidate C Votes: " + countC, 20, 90);
 
-    doc.text("Candidate C Votes: " + finalC, 20, 90);
-
-    doc.text("Total Votes: " + finalTotal, 20, 120);
-
-    doc.text("Generated Time:", 20, 150);
-
-    doc.text(new Date().toLocaleString(), 20, 165);
+    doc.text("Total Votes: " + totalVotes, 20, 120);
 
     doc.save("Election_Report.pdf");
 
