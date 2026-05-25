@@ -2,62 +2,25 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Live Election Results</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Results</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
 
-<style>
-body{
-    font-family: Arial;
-    margin:0;
-    background:#f4f6f9;
-    text-align:center;
-}
-
-header{
-    background:#1e3a8a;
-    color:white;
-    padding:15px;
-}
-
-.card{
-    background:white;
-    margin:20px auto;
-    padding:20px;
-    max-width:500px;
-    border-radius:10px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-canvas{
-    max-width:400px;
-}
-</style>
 </head>
 
 <body>
 
-<header>
-<h2>📊 Live Election Results 2026</h2>
-</header>
+<h2>Live Results</h2>
 
-<div class="card">
-<h3>Real-Time Voting Stats</h3>
-<canvas id="pieChart"></canvas>
-</div>
+<canvas id="chart"></canvas>
 
-<div class="card">
-<h3>Vote Comparison</h3>
-<canvas id="barChart"></canvas>
-</div>
+<button onclick="logout()">Logout</button>
 
 <script>
-// 🔥 Firebase Config (ADD YOUR KEYS)
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -68,51 +31,38 @@ const firebaseConfig = {
   appId: "1:181065724520:web:f72a93869786373c1101dd"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// 🔐 LOGOUT
+function logout(){
+    firebase.auth().signOut().then(() => {
+        window.location.href = "index.html";
+    });
+}
 
-// 📊 Chart setup
-let pieChart = new Chart(document.getElementById('pieChart'), {
-    type: 'pie',
-    data: {
-        labels: ['Candidate A', 'Candidate B', 'Candidate C'],
-        datasets: [{
-            data: [0,0,0],
-            backgroundColor: ['#1e3a8a','#f59e0b','#10b981']
+// Chart
+let chart = new Chart(document.getElementById('chart'), {
+    type:'bar',
+    data:{
+        labels:['A','B','C'],
+        datasets:[{
+            label:'Votes',
+            data:[0,0,0]
         }]
     }
 });
 
-let barChart = new Chart(document.getElementById('barChart'), {
-    type: 'bar',
-    data: {
-        labels: ['A','B','C'],
-        datasets: [{
-            label: 'Votes',
-            data: [0,0,0]
-        }]
-    }
-});
+// Live update
+db.collection("votes").onSnapshot(snapshot=>{
+    let a=0,b=0,c=0;
 
-// 🔥 REAL TIME LISTENER
-db.collection("votes").onSnapshot(snapshot => {
-
-    let a=0, b=0, c=0;
-
-    snapshot.forEach(doc => {
-        let data = doc.data();
-
-        if(data.candidate === "A") a++;
-        if(data.candidate === "B") b++;
-        if(data.candidate === "C") c++;
+    snapshot.forEach(doc=>{
+        let d = doc.data();
+        if(d.candidate=="A") a++;
+        if(d.candidate=="B") b++;
+        if(d.candidate=="C") c++;
     });
 
-    // update charts
-    pieChart.data.datasets[0].data = [a,b,c];
-    barChart.data.datasets[0].data = [a,b,c];
-
-    pieChart.update();
-    barChart.update();
+    chart.data.datasets[0].data = [a,b,c];
+    chart.update();
 });
 </script>
 
