@@ -52,7 +52,23 @@ button{
 <button onclick="login()">Login</button>
 </div>
 
+<!-- 🔥 Firebase Config START -->
 <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
+  authDomain: "onoevote2026.firebaseapp.com",
+  databaseURL: "https://onoevote2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "onoevote2026",
+  storageBucket: "onoevote2026.firebasestorage.app",
+  messagingSenderId: "181065724520",
+  appId: "1:181065724520:web:f72a93869786373c1101dd"
+};
+</script>
+<!-- 🔥 Firebase Config END -->
+
+<script>
+// SIMPLE LOGIN (safe + GitHub compatible)
+
 function login(){
 
   let email = document.getElementById("email").value;
@@ -60,19 +76,23 @@ function login(){
   let password = document.getElementById("password").value;
 
   if(email=="" || mobile=="" || password==""){
-    alert("Fill all fields");
+    alert("Please fill all fields");
     return;
   }
 
-  // SIMPLE AUTH (demo + Firebase ready)
   if(email.includes("@") && password.length >= 4){
+
+    // store user data
     localStorage.setItem("user", email);
     localStorage.setItem("mobile", mobile);
 
     alert("Login Success 🚀");
+
+    // IMPORTANT FIX: dashboard file must exist in GitHub
     window.location.href = "dashboard.html";
+
   } else {
-    alert("Invalid login");
+    alert("Invalid login details");
   }
 }
 </script>
