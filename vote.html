@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Vote Page</title>
 
-<!-- Firebase -->
+<!-- Firebase Compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -14,7 +13,7 @@
 <style>
 
 body{
-    font-family: Arial;
+    font-family:Arial;
     background:#f4f6f9;
     text-align:center;
     padding-top:40px;
@@ -94,7 +93,7 @@ Submit Vote
 
 <script>
 
-// 🔥 FIREBASE CONFIG
+// 🔥 YOUR FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -105,7 +104,7 @@ const firebaseConfig = {
   appId: "1:181065724520:web:f72a93869786373c1101dd"
 };
 
-// 🔥 INITIALIZE FIREBASE
+// 🔥 Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
@@ -113,8 +112,8 @@ const db = firebase.firestore();
 
 let selectedCandidate = "";
 
-// 🔐 AUTH CHECK
-firebase.auth().onAuthStateChanged(async (user) => {
+// 🔐 Login Check
+auth.onAuthStateChanged(async (user) => {
 
     if (!user) {
 
@@ -122,36 +121,46 @@ firebase.auth().onAuthStateChanged(async (user) => {
         return;
     }
 
-    // 🔥 CHECK ALREADY VOTED
-    const doc = await db.collection("votes")
-                        .doc(user.uid)
-                        .get();
+    try {
 
-    if(doc.exists){
+        // 🔥 Check already voted
+        const voteDoc = await db.collection("votes")
+                                .doc(user.uid)
+                                .get();
 
-        document.getElementById("voteArea").style.display = "none";
+        if(voteDoc.exists){
 
-        document.getElementById("message").innerHTML =
-        "✅ You already voted successfully";
+            document.getElementById("voteArea").style.display = "none";
+
+            document.getElementById("message").innerHTML =
+            "✅ You already voted successfully";
+        }
+
+    }
+    catch(error){
+
+        console.log(error);
     }
 
 });
 
-// 🟢 SELECT CANDIDATE
+// 🟢 Select Candidate
 function selectCandidate(value){
 
     selectedCandidate = value;
 
     document.getElementById("submitBtn").disabled = false;
 
-    ["A","B","C"].forEach(id=>{
+    ["A","B","C"].forEach(id => {
+
         document.getElementById(id).classList.remove("selected");
+
     });
 
     document.getElementById(value).classList.add("selected");
 }
 
-// 🟢 SUBMIT VOTE
+// 🟢 Submit Vote
 async function submitVote(){
 
     const user = auth.currentUser;
@@ -164,24 +173,13 @@ async function submitVote(){
 
     if(!selectedCandidate){
 
-        alert("Please select a candidate");
+        alert("Please select candidate");
         return;
     }
 
-    try{
+    try {
 
-        // 🔥 CHECK AGAIN
-        const existingVote = await db.collection("votes")
-                                     .doc(user.uid)
-                                     .get();
-
-        if(existingVote.exists){
-
-            alert("You already voted");
-            return;
-        }
-
-        // 🔥 SAVE TO FIRESTORE
+        // 🔥 Save Vote
         await db.collection("votes")
                 .doc(user.uid)
                 .set({
@@ -193,7 +191,7 @@ async function submitVote(){
 
                 });
 
-        // 🔥 LOCK PAGE
+        // 🔥 Success Message
         document.getElementById("voteArea").style.display = "none";
 
         document.getElementById("message").innerHTML =
@@ -203,6 +201,7 @@ async function submitVote(){
     catch(error){
 
         alert(error.message);
+        console.log(error);
     }
 }
 
