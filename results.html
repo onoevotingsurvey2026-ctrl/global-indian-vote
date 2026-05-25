@@ -2,25 +2,93 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Live Results</title>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+<style>
 
+body{
+    font-family:Arial;
+    background:#f4f6f9;
+    text-align:center;
+    padding:20px;
+}
+
+.container{
+    width:90%;
+    max-width:800px;
+    margin:auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+.counts{
+    display:flex;
+    justify-content:space-around;
+    margin-top:20px;
+    flex-wrap:wrap;
+}
+
+.card{
+    background:#0d6efd;
+    color:white;
+    padding:20px;
+    margin:10px;
+    border-radius:10px;
+    width:150px;
+}
+
+canvas{
+    margin-top:30px;
+}
+
+</style>
 </head>
 
 <body>
 
-<h2>Live Results</h2>
+<div class="container">
 
-<canvas id="chart"></canvas>
+<h2>📊 Live Election Results</h2>
 
-<button onclick="logout()">Logout</button>
+<div class="counts">
+
+<div class="card">
+<h3>Candidate A</h3>
+<h1 id="countA">0</h1>
+</div>
+
+<div class="card">
+<h3>Candidate B</h3>
+<h1 id="countB">0</h1>
+</div>
+
+<div class="card">
+<h3>Candidate C</h3>
+<h1 id="countC">0</h1>
+</div>
+
+</div>
+
+<canvas id="barChart"></canvas>
+
+<canvas id="pieChart"></canvas>
+
+</div>
 
 <script>
+
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
   authDomain: "onoevote2026.firebaseapp.com",
@@ -31,39 +99,104 @@ const firebaseConfig = {
   appId: "1:181065724520:web:f72a93869786373c1101dd"
 };
 
-// 🔐 LOGOUT
-function logout(){
-    firebase.auth().signOut().then(() => {
-        window.location.href = "index.html";
+// 🔥 Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+let barChart;
+let pieChart;
+
+// 🔥 REALTIME RESULTS
+db.collection("votes").onSnapshot((snapshot) => {
+
+    let countA = 0;
+    let countB = 0;
+    let countC = 0;
+
+    snapshot.forEach((doc) => {
+
+        const data = doc.data();
+
+        if(data.candidate === "A"){
+            countA++;
+        }
+
+        else if(data.candidate === "B"){
+            countB++;
+        }
+
+        else if(data.candidate === "C"){
+            countC++;
+        }
+
+    });
+
+    // 🔥 Update UI
+    document.getElementById("countA").innerHTML = countA;
+    document.getElementById("countB").innerHTML = countB;
+    document.getElementById("countC").innerHTML = countC;
+
+    updateCharts(countA, countB, countC);
+
+});
+
+// 🔥 UPDATE CHARTS
+function updateCharts(a, b, c){
+
+    const dataValues = [a, b, c];
+
+    // BAR CHART
+    if(barChart){
+        barChart.destroy();
+    }
+
+    const barCtx = document.getElementById("barChart");
+
+    barChart = new Chart(barCtx, {
+
+        type: "bar",
+
+        data: {
+
+            labels: ["Candidate A", "Candidate B", "Candidate C"],
+
+            datasets: [{
+
+                label: "Votes",
+
+                data: dataValues,
+
+                borderWidth: 1
+
+            }]
+        }
+    });
+
+    // PIE CHART
+    if(pieChart){
+        pieChart.destroy();
+    }
+
+    const pieCtx = document.getElementById("pieChart");
+
+    pieChart = new Chart(pieCtx, {
+
+        type: "pie",
+
+        data: {
+
+            labels: ["Candidate A", "Candidate B", "Candidate C"],
+
+            datasets: [{
+
+                data: dataValues
+
+            }]
+        }
     });
 }
 
-// Chart
-let chart = new Chart(document.getElementById('chart'), {
-    type:'bar',
-    data:{
-        labels:['A','B','C'],
-        datasets:[{
-            label:'Votes',
-            data:[0,0,0]
-        }]
-    }
-});
-
-// Live update
-db.collection("votes").onSnapshot(snapshot=>{
-    let a=0,b=0,c=0;
-
-    snapshot.forEach(doc=>{
-        let d = doc.data();
-        if(d.candidate=="A") a++;
-        if(d.candidate=="B") b++;
-        if(d.candidate=="C") c++;
-    });
-
-    chart.data.datasets[0].data = [a,b,c];
-    chart.update();
-});
 </script>
 
 </body>
