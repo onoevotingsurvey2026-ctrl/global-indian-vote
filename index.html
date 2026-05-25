@@ -2,42 +2,40 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Global Indian Vote 2026 - Login</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<title>Global Indian Vote 2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body{
-    font-family: Arial;
-    background:#f4f6f9;
-    text-align:center;
-    padding:50px;
+  font-family: Arial;
+  background:#f4f6f9;
+  text-align:center;
+  padding:40px;
 }
 
 .box{
-    background:white;
-    padding:20px;
-    max-width:350px;
-    margin:auto;
-    border-radius:10px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+  background:white;
+  padding:20px;
+  max-width:400px;
+  margin:auto;
+  border-radius:10px;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1);
 }
 
 input{
-    width:90%;
-    padding:10px;
-    margin:8px 0;
+  width:90%;
+  padding:10px;
+  margin:8px;
 }
 
 button{
-    padding:10px;
-    width:95%;
-    background:#1e3a8a;
-    color:white;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
+  width:95%;
+  padding:10px;
+  background:#1e3a8a;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -47,40 +45,35 @@ button{
 <div class="box">
 <h2>🇮🇳 Global Indian Vote 2026</h2>
 
-<input type="email" id="email" placeholder="Enter Email"><br>
-<input type="password" id="password" placeholder="Enter Password"><br>
+<input type="email" id="email" placeholder="Email"><br>
+<input type="text" id="mobile" placeholder="Mobile Number"><br>
+<input type="password" id="password" placeholder="Password"><br>
 
 <button onclick="login()">Login</button>
 </div>
 
 <script>
-// 🔥 Firebase Config (replace with yours from console)
-const firebaseConfig = {
-  apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
-  authDomain: "onoevote2026.firebaseapp.com",
-  databaseURL: "https://onoevote2026-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "onoevote2026",
-  storageBucket: "onoevote2026.firebasestorage.app",
-  messagingSenderId: "181065724520",
-  appId: "1:181065724520:web:f72a93869786373c1101dd"
-};
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-
-// 🔐 Login function
 function login(){
-    let email = document.getElementById("email").value;
-    let password = document.getElementById("password").value;
 
-    auth.signInWithEmailAndPassword(email, password)
-    .then(() => {
-        alert("Login Successful 🚀");
-        window.location.href = "dashboard.html";
-    })
-    .catch((error) => {
-        alert(error.message);
-    });
+  let email = document.getElementById("email").value;
+  let mobile = document.getElementById("mobile").value;
+  let password = document.getElementById("password").value;
+
+  if(email=="" || mobile=="" || password==""){
+    alert("Fill all fields");
+    return;
+  }
+
+  // SIMPLE AUTH (demo + Firebase ready)
+  if(email.includes("@") && password.length >= 4){
+    localStorage.setItem("user", email);
+    localStorage.setItem("mobile", mobile);
+
+    alert("Login Success 🚀");
+    window.location.href = "dashboard.html";
+  } else {
+    alert("Invalid login");
+  }
 }
 </script>
 
