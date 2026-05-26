@@ -1,251 +1,121 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Live Results</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<style>
-
-body{
-    font-family:Arial;
-    background:#f4f6f9;
-    text-align:center;
-    padding:20px;
-}
-
-.container{
-    width:90%;
-    max-width:900px;
-    margin:auto;
-    background:white;
-    padding:20px;
-    border-radius:10px;
-    box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
-
-.counts{
-    display:flex;
-    justify-content:center;
-    flex-wrap:wrap;
-}
-
-.card{
-    background:#0d6efd;
-    color:white;
-    padding:20px;
-    margin:10px;
-    border-radius:10px;
-    width:160px;
-}
-
-canvas{
-    margin-top:30px;
-}
-
-button{
-    padding:12px 20px;
-    border:none;
-    border-radius:8px;
-    background:#198754;
-    color:white;
-    cursor:pointer;
-    margin-top:20px;
-}
-
-</style>
+  <title>Result Page</title>
 </head>
 
 <body>
 
-<div class="container">
+<h2>Live Voting Results</h2>
 
-<h2>📊 Live Election Results</h2>
+<div id="resultBox"></div>
 
-<div class="counts">
+<button onclick="downloadPDF()">Download PDF Report</button>
 
-<div class="card">
-<h3>Candidate A</h3>
-<h1 id="countA">0</h1>
-</div>
-
-<div class="card">
-<h3>Candidate B</h3>
-<h1 id="countB">0</h1>
-</div>
-
-<div class="card">
-<h3>Candidate C</h3>
-<h1 id="countC">0</h1>
-</div>
-
-<div class="card">
-<h3>Total Votes</h3>
-<h1 id="totalVotes">0</h1>
-</div>
-
-</div>
-
-<canvas id="barChart" height="120"></canvas>
-
-<canvas id="pieChart" height="120"></canvas>
-
-<button onclick="downloadPDF()">
-⬇ Download PDF Report
-</button>
-
-</div>
+<!-- PDF LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
-  authDomain: "onoevote2026.firebaseapp.com",
-  databaseURL: "https://onoevote2026-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "onoevote2026",
-  storageBucket: "onoevote2026.firebasestorage.app",
-  messagingSenderId: "181065724520",
-  appId: "1:181065724520:web:f72a93869786373c1101dd"
-};
+// ---------------- LOAD RESULTS ----------------
+function loadResults(){
 
-firebase.initializeApp(firebaseConfig);
+  let votes = JSON.parse(localStorage.getItem("votes")) || [];
 
-const db = firebase.firestore();
+  let a = 0, b = 0, c = 0;
 
-let countA = 0;
-let countB = 0;
-let countC = 0;
+  let html = "<h3>Vote List</h3>";
 
-let barChart;
-let pieChart;
+  votes.forEach(v => {
 
-// REALTIME RESULTS
-db.collection("votes").onSnapshot((snapshot) => {
+    html += v.email + " → " + v.candidate + "<br>";
 
-    countA = 0;
-    countB = 0;
-    countC = 0;
+    if(v.candidate === "A") a++;
+    if(v.candidate === "B") b++;
+    if(v.candidate === "C") c++;
+  });
 
-    snapshot.forEach((doc) => {
+  html += "<hr>";
+  html += "<h3>Summary</h3>";
+  html += "Candidate A: " + a + "<br>";
+  html += "Candidate B: " + b + "<br>";
+  html += "Candidate C: " + c + "<br>";
 
-        const data = doc.data();
-
-        if(data.candidate === "A"){
-            countA++;
-        }
-
-        if(data.candidate === "B"){
-            countB++;
-        }
-
-        if(data.candidate === "C"){
-            countC++;
-        }
-
-    });
-
-    const totalVotes = countA + countB + countC;
-
-    document.getElementById("countA").innerHTML = countA;
-    document.getElementById("countB").innerHTML = countB;
-    document.getElementById("countC").innerHTML = countC;
-
-    document.getElementById("totalVotes").innerHTML = totalVotes;
-
-    updateCharts();
-
-});
-
-// CHARTS
-function updateCharts(){
-
-    const values = [countA, countB, countC];
-
-    if(barChart){
-        barChart.destroy();
-    }
-
-    const barCtx = document.getElementById("barChart");
-
-    barChart = new Chart(barCtx, {
-
-        type: "bar",
-
-        data: {
-
-            labels: ["Candidate A","Candidate B","Candidate C"],
-
-            datasets: [{
-                label: "Votes",
-                data: values,
-                borderWidth: 1
-            }]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-
-    });
-
-    if(pieChart){
-        pieChart.destroy();
-    }
-
-    const pieCtx = document.getElementById("pieChart");
-
-    pieChart = new Chart(pieCtx, {
-
-        type: "pie",
-
-        data: {
-
-            labels: ["Candidate A","Candidate B","Candidate C"],
-
-            datasets: [{
-                data: values
-            }]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-
-    });
-
+  document.getElementById("resultBox").innerHTML = html;
 }
 
-// PDF DOWNLOAD
+loadResults();
+
+
+// ---------------- PROFESSIONAL PDF ----------------
 function downloadPDF(){
 
-    const { jsPDF } = window.jspdf;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
 
-    const doc = new jsPDF();
+  let votes = JSON.parse(localStorage.getItem("votes")) || [];
 
-    const totalVotes = countA + countB + countC;
+  // HEADER
+  doc.setFontSize(18);
+  doc.text("ONLINE VOTING SYSTEM REPORT", 20, 20);
 
-    doc.text("Live Election Report", 20, 20);
+  doc.setFontSize(11);
+  doc.text("Generated on: " + new Date().toLocaleString(), 20, 30);
 
-    doc.text("Candidate A Votes: " + countA, 20, 50);
+  // SUMMARY
+  let a = 0, b = 0, c = 0;
 
-    doc.text("Candidate B Votes: " + countB, 20, 70);
+  votes.forEach(v => {
+    if(v.candidate === "A") a++;
+    if(v.candidate === "B") b++;
+    if(v.candidate === "C") c++;
+  });
 
-    doc.text("Candidate C Votes: " + countC, 20, 90);
+  doc.setFontSize(13);
+  doc.text("SUMMARY", 20, 45);
 
-    doc.text("Total Votes: " + totalVotes, 20, 120);
+  doc.setFontSize(11);
+  doc.text("Candidate A: " + a, 20, 55);
+  doc.text("Candidate B: " + b, 20, 62);
+  doc.text("Candidate C: " + c, 20, 69);
 
-    doc.save("Election_Report.pdf");
+  // TABLE HEADER
+  doc.setFontSize(13);
+  doc.text("VOTER DETAILS", 20, 85);
 
+  doc.setFontSize(10);
+
+  let y = 95;
+
+  doc.text("No", 20, y);
+  doc.text("Email", 40, y);
+  doc.text("Vote", 140, y);
+
+  y += 5;
+  doc.line(20, y, 190, y);
+
+  y += 10;
+
+  // TABLE DATA
+  votes.forEach((v, i) => {
+
+    if(y > 270){
+      doc.addPage();
+      y = 20;
+    }
+
+    doc.text(String(i+1), 20, y);
+    doc.text(v.email, 40, y);
+    doc.text(v.candidate, 140, y);
+
+    y += 10;
+  });
+
+  // FOOTER
+  doc.setFontSize(10);
+  doc.text("End of Report - Voting System", 20, 285);
+
+  doc.save("Voting_Report.pdf");
 }
 
 </script>
