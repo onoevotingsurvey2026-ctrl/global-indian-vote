@@ -1,211 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Vote Now</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<style>
-
-body{
-    font-family:Arial;
-    background:#f4f6f9;
-    text-align:center;
-    padding-top:50px;
-}
-
-.container{
-    width:400px;
-    margin:auto;
-    background:white;
-    padding:30px;
-    border-radius:10px;
-    box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
-
-button{
-    padding:12px 20px;
-    margin:10px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    background:#0d6efd;
-    color:white;
-    font-size:16px;
-}
-
-#submitBtn{
-    width:100%;
-    background:#198754;
-}
-
-.disabled{
-    opacity:0.5;
-    pointer-events:none;
-}
-
-</style>
+  <title>Vote Page</title>
 </head>
-
 <body>
 
-<div class="container">
+<h2>Vote Your Candidate</h2>
 
-<h2>🗳 Vote Now</h2>
-
-<div id="voteSection">
-
-<button onclick="selectCandidate('A')">
-Candidate A
-</button>
-
-<button onclick="selectCandidate('B')">
-Candidate B
-</button>
-
-<button onclick="selectCandidate('C')">
-Candidate C
-</button>
-
-<br><br>
-
-<button id="submitBtn" onclick="submitVote()" disabled>
-Submit Vote
-</button>
-
-</div>
-
-<h3 id="message"></h3>
-
-</div>
+<button onclick="vote('A')">Vote A</button>
+<button onclick="vote('B')">Vote B</button>
+<button onclick="vote('C')">Vote C</button>
 
 <script>
+function vote(candidate){
 
-// FIREBASE CONFIG
-const firebaseConfig = {
-  apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
-  authDomain: "onoevote2026.firebaseapp.com",
-  databaseURL: "https://onoevote2026-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "onoevote2026",
-  storageBucket: "onoevote2026.firebasestorage.app",
-  messagingSenderId: "181065724520",
-  appId: "1:181065724520:web:f72a93869786373c1101dd"
-};
+  const user = localStorage.getItem("user");
 
-// INIT
-firebase.initializeApp(firebaseConfig);
+  if(!user){
+    alert("Please login first");
+    window.location.href = "login.html";
+    return;
+  }
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+  if(localStorage.getItem(user+"_voted") === "true"){
+    alert("Already voted");
+    return;
+  }
 
-let selectedCandidate = "";
+  let votes = JSON.parse(localStorage.getItem("votes")) || [];
 
-// LOGIN CHECK
-auth.onAuthStateChanged((user) => {
+  votes.push({
+    email: user,
+    candidate: candidate,
+    time: new Date().toLocaleString()
+  });
 
-    if(!user){
+  localStorage.setItem("votes", JSON.stringify(votes));
+  localStorage.setItem(user+"_voted", "true");
 
-        window.location.href = "index.html";
-        return;
+  alert("Vote submitted successfully");
 
-    }
-
-    // CHECK ALREADY VOTED
-    db.collection("votes").doc(user.uid).get()
-
-    .then((doc) => {
-
-        if(doc.exists){
-
-            document.getElementById("voteSection").innerHTML = "";
-
-            document.getElementById("message").innerHTML =
-            "✅ You already voted successfully";
-
-        }
-
-    });
-
-});
-
-// SELECT
-function selectCandidate(value){
-
-    selectedCandidate = value;
-
-    document.getElementById("submitBtn").disabled = false;
-
+  window.location.href = "dashboard.html";
 }
-
-// SUBMIT
-function submitVote(){
-
-    const user = auth.currentUser;
-
-    if(!user){
-
-        alert("Please Login");
-        return;
-
-    }
-
-    if(selectedCandidate === ""){
-
-        alert("Please Select Candidate");
-        return;
-
-    }
-
-    // FINAL DUPLICATE CHECK
-    db.collection("votes").doc(user.uid).get()
-
-    .then((doc) => {
-
-        // ALREADY VOTED
-        if(doc.exists){
-
-            document.getElementById("voteSection").innerHTML = "";
-
-            document.getElementById("message").innerHTML =
-            "✅ You already voted successfully";
-
-            return;
-
-        }
-
-        // SAVE VOTE
-        db.collection("votes").doc(user.uid).set({
-
-            candidate: selectedCandidate,
-            email: user.email,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-
-        })
-
-        .then(() => {
-
-            document.getElementById("voteSection").innerHTML = "";
-
-            document.getElementById("message").innerHTML =
-            "🎉 Vote Submitted Successfully";
-
-            setTimeout(() => {
-
-                window.location.href = "results.html";
-
-            }, 1500);
-
-        });
-
-    });
-
-}
-
 </script>
 
 </body>
