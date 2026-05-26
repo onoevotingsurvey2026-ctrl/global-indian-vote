@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Vote Page</title>
+  <title>Vote</title>
 </head>
-
 <body>
 
-<h2>Vote for Your Candidate</h2>
+<h2>Cast Your Vote</h2>
 
 <p id="userBox"></p>
 
@@ -16,38 +15,19 @@
 
 <script>
 
-// ---------------- SHOW USER ----------------
-const user = localStorage.getItem("user");
+let user = localStorage.getItem("user");
 
 if(!user){
   alert("Please login first");
   window.location.href = "index.html";
 }
 
-document.getElementById("userBox").innerText = "Logged in as: " + user;
+document.getElementById("userBox").innerText = "Logged in: " + user;
 
-// ---------------- FINAL VOTE FUNCTION ----------------
 function vote(candidate){
 
-  const user = localStorage.getItem("user");
-
-  // safety check
-  if(!user){
-    alert("Please login first");
-    window.location.href = "index.html";
-    return;
-  }
-
-  // 🔴 CHECK IF ALREADY VOTED
-  if(localStorage.getItem(user + "_voted") === "true"){
-    alert("❌ You have already voted. Multiple voting not allowed.");
-    return;
-  }
-
-  // load existing votes
   let votes = JSON.parse(localStorage.getItem("votes")) || [];
 
-  // save new vote
   votes.push({
     email: user,
     candidate: candidate,
@@ -56,12 +36,7 @@ function vote(candidate){
 
   localStorage.setItem("votes", JSON.stringify(votes));
 
-  // 🔴 LOCK USER AFTER FIRST VOTE
-  localStorage.setItem(user + "_voted", "true");
-
-  alert("✅ Vote submitted successfully");
-
-  // go to result page
+  alert("Vote submitted!");
   window.location.href = "result.html";
 }
 
