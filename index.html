@@ -1,178 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ONE VOTE SYSTEM - FINAL</title>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <style>
-    body { font-family: Arial; text-align:center; background:#f4f4f4; }
-    button { padding:10px 15px; margin:5px; cursor:pointer; }
-    canvas { max-width:500px; margin:20px auto; }
-  </style>
+  <title>Login</title>
 </head>
-
 <body>
 
-<h2>LIVE ELECTION VOTING SYSTEM</h2>
+<h2>Login</h2>
 
-<div id="userBox">Not logged in</div>
-
-<button onclick="vote('A')">Candidate A</button>
-<button onclick="vote('B')">Candidate B</button>
-<button onclick="vote('C')">Candidate C</button>
-
-<br><br>
-
-<canvas id="pieChart"></canvas>
-<canvas id="barChart"></canvas>
-
-<br>
-<button onclick="downloadReport()">Download PDF Report</button>
+<input id="email" placeholder="Enter Gmail">
+<button onclick="login()">Login</button>
 
 <script>
-/* 🔥 FIREBASE CONFIG - REPLACE YOUR DETAILS */
-const firebaseConfig = {
-  apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
-  authDomain: "onoevote2026.firebaseapp.com",
-  databaseURL: "https://onoevote2026-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "onoevote2026",
-  storageBucket: "onoevote2026.firebasestorage.app",
-  messagingSenderId: "181065724520",
-  appId: "1:181065724520:web:f72a93869786373c1101dd"
-};
+function login(){
+  const email = document.getElementById("email").value;
 
-firebase.initializeApp(firebaseConfig);
+  if(!email.includes("@")){
+    alert("Enter valid email");
+    return;
+  }
 
-const auth = firebase.auth();
-const db = firebase.database();
+  localStorage.setItem("user", email);
+  localStorage.setItem(email+"_voted", "false");
 
-let currentUser = null;
-
-/* 🔐 LOGIN */
-auth.signInWithPopup(new firebase.auth.GoogleAuthProvider())
-.then(res => {
-  currentUser = res.user;
-
-  document.getElementById("userBox").innerHTML =
-    "Logged in: " + currentUser.email;
-
-  checkAlreadyVoted();
-  updateCharts();
-});
-
-/* 🚫 CHECK ALREADY VOTED */
-function checkAlreadyVoted() {
-  db.ref("votes/" + currentUser.uid).once("value", snap => {
-    if (snap.exists()) {
-      alert("You have already voted. Access restricted.");
-    }
-  });
+  window.location.href = "vote.html";
 }
-
-/* 🗳️ VOTE FUNCTION (ONLY ONCE) */
-function vote(candidate) {
-  const uid = currentUser.uid;
-
-  db.ref("votes/" + uid).once("value", snap => {
-    if (snap.exists()) {
-      alert("❌ Vote already submitted. Only one vote allowed.");
-      return;
-    }
-
-    db.ref("votes/" + uid).set({
-      email: currentUser.email,
-      candidate: candidate,
-      timestamp: new Date().toLocaleString()
-    });
-
-    alert("✅ Vote submitted successfully!");
-    updateCharts();
-  });
-}
-
-/* 📊 CHART VARIABLES */
-let pieChart, barChart;
-
-/* 📊 UPDATE CHART DATA */
-function updateCharts() {
-  db.ref("votes").once("value", snap => {
-
-    let result = { A:0, B:0, C:0 };
-
-    snap.forEach(child => {
-      let v = child.val();
-      if (v.candidate) result[v.candidate]++;
-    });
-
-    drawCharts(result);
-  });
-}
-
-/* 📈 DRAW CHARTS */
-function drawCharts(data) {
-
-  if (pieChart) pieChart.destroy();
-  if (barChart) barChart.destroy();
-
-  pieChart = new Chart(document.getElementById("pieChart"), {
-    type: "pie",
-    data: {
-      labels: ["A", "B", "C"],
-      datasets: [{
-        data: [data.A, data.B, data.C]
-      }]
-    }
-  });
-
-  barChart = new Chart(document.getElementById("barChart"), {
-    type: "bar",
-    data: {
-      labels: ["A", "B", "C"],
-      datasets: [{
-        data: [data.A, data.B, data.C]
-      }]
-    }
-  });
-}
-
-/* 📥 DOWNLOAD PDF REPORT */
-function downloadReport() {
-  db.ref("votes").once("value", snap => {
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    let y = 10;
-
-    doc.text("ELECTION VOTE REPORT", 10, y);
-    y += 10;
-
-    snap.forEach(child => {
-      let v = child.val();
-      doc.text(
-        v.email + " | " + v.candidate + " | " + v.timestamp,
-        10, y
-      );
-      y += 10;
-    });
-
-    doc.save("vote_report.pdf");
-  });
-}
-
-/* 🔄 AUTO REFRESH LIVE RESULTS */
-setInterval(updateCharts, 3000);
-
 </script>
 
 </body>
