@@ -1,121 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Result Page</title>
+  <title>Results</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
 
-<h2>Live Voting Results</h2>
+<h2>Live Results</h2>
 
-<div id="resultBox"></div>
+<canvas id="pieChart"></canvas>
+<canvas id="barChart"></canvas>
 
-<button onclick="downloadPDF()">Download PDF Report</button>
-
-<!-- PDF LIBRARY -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<button onclick="downloadPDF()">Download PDF</button>
+<button onclick="resetVotes()">Admin Reset</button>
 
 <script>
 
-// ---------------- LOAD RESULTS ----------------
-function loadResults(){
+let votes = JSON.parse(localStorage.getItem("votes")) || [];
 
-  let votes = JSON.parse(localStorage.getItem("votes")) || [];
+let a=0,b=0,c=0;
 
-  let a = 0, b = 0, c = 0;
+votes.forEach(v=>{
+  if(v.candidate==="A") a++;
+  if(v.candidate==="B") b++;
+  if(v.candidate==="C") c++;
+});
 
-  let html = "<h3>Vote List</h3>";
+// PIE CHART
+new Chart(document.getElementById("pieChart"), {
+  type: 'pie',
+  data: {
+    labels: ["A","B","C"],
+    datasets: [{
+      data: [a,b,c]
+    }]
+  }
+});
 
-  votes.forEach(v => {
+// BAR CHART
+new Chart(document.getElementById("barChart"), {
+  type: 'bar',
+  data: {
+    labels: ["A","B","C"],
+    datasets: [{
+      data: [a,b,c]
+    }]
+  }
+});
 
-    html += v.email + " → " + v.candidate + "<br>";
-
-    if(v.candidate === "A") a++;
-    if(v.candidate === "B") b++;
-    if(v.candidate === "C") c++;
-  });
-
-  html += "<hr>";
-  html += "<h3>Summary</h3>";
-  html += "Candidate A: " + a + "<br>";
-  html += "Candidate B: " + b + "<br>";
-  html += "Candidate C: " + c + "<br>";
-
-  document.getElementById("resultBox").innerHTML = html;
-}
-
-loadResults();
-
-
-// ---------------- PROFESSIONAL PDF ----------------
+// PDF
 function downloadPDF(){
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  let votes = JSON.parse(localStorage.getItem("votes")) || [];
+  doc.text("Voting Report", 20, 20);
+  doc.text("A: " + a, 20, 40);
+  doc.text("B: " + b, 20, 50);
+  doc.text("C: " + c, 20, 60);
 
-  // HEADER
-  doc.setFontSize(18);
-  doc.text("ONLINE VOTING SYSTEM REPORT", 20, 20);
+  doc.save("report.pdf");
+}
 
-  doc.setFontSize(11);
-  doc.text("Generated on: " + new Date().toLocaleString(), 20, 30);
-
-  // SUMMARY
-  let a = 0, b = 0, c = 0;
-
-  votes.forEach(v => {
-    if(v.candidate === "A") a++;
-    if(v.candidate === "B") b++;
-    if(v.candidate === "C") c++;
-  });
-
-  doc.setFontSize(13);
-  doc.text("SUMMARY", 20, 45);
-
-  doc.setFontSize(11);
-  doc.text("Candidate A: " + a, 20, 55);
-  doc.text("Candidate B: " + b, 20, 62);
-  doc.text("Candidate C: " + c, 20, 69);
-
-  // TABLE HEADER
-  doc.setFontSize(13);
-  doc.text("VOTER DETAILS", 20, 85);
-
-  doc.setFontSize(10);
-
-  let y = 95;
-
-  doc.text("No", 20, y);
-  doc.text("Email", 40, y);
-  doc.text("Vote", 140, y);
-
-  y += 5;
-  doc.line(20, y, 190, y);
-
-  y += 10;
-
-  // TABLE DATA
-  votes.forEach((v, i) => {
-
-    if(y > 270){
-      doc.addPage();
-      y = 20;
-    }
-
-    doc.text(String(i+1), 20, y);
-    doc.text(v.email, 40, y);
-    doc.text(v.candidate, 140, y);
-
-    y += 10;
-  });
-
-  // FOOTER
-  doc.setFontSize(10);
-  doc.text("End of Report - Voting System", 20, 285);
-
-  doc.save("Voting_Report.pdf");
+// RESET
+function resetVotes(){
+  if(confirm("Reset all votes?")){
+    localStorage.removeItem("votes");
+    location.reload();
+  }
 }
 
 </script>
