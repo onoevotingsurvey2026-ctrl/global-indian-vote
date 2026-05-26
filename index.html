@@ -5,23 +5,21 @@
 </head>
 <body>
 
-<h2>Login</h2>
+<h2>Voting System Login</h2>
 
-<input id="email" placeholder="Enter Gmail">
+<input id="email" placeholder="Enter Gmail ID">
 <button onclick="login()">Login</button>
 
 <script>
 function login(){
-  const email = document.getElementById("email").value;
+  let email = document.getElementById("email").value;
 
-  if(!email.includes("@")){
+  if(!email || !email.includes("@")){
     alert("Enter valid email");
     return;
   }
 
   localStorage.setItem("user", email);
-  localStorage.setItem(email+"_voted", "false");
-
   window.location.href = "vote.html";
 }
 </script>
