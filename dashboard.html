@@ -1,54 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Dashboard</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-
-<style>
-body{font-family:Arial;text-align:center;background:#f4f6f9;}
-button{padding:10px;margin:10px;}
-</style>
+  <title>Dashboard</title>
 </head>
-
 <body>
 
-<h2>Dashboard</h2>
+<h2>Live Voting Dashboard</h2>
 
-<button onclick="location.href='vote.html'">Go to Vote</button>
-<button onclick="location.href='results.html'">Live Results</button>
-<button onclick="logout()">Logout</button>
+<div id="result"></div>
+
+<button onclick="downloadPDF()">Download PDF</button>
 
 <script>
-// Firebase Config (ADD YOUR KEY)
-const firebaseConfig = {
-  apiKey: "AIzaSyCfyVODifxy7a1Vt80IcU-ixhZwu6W0Jeg",
-  authDomain: "onoevote2026.firebaseapp.com",
-  databaseURL: "https://onoevote2026-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "onoevote2026",
-  storageBucket: "onoevote2026.firebasestorage.app",
-  messagingSenderId: "181065724520",
-  appId: "1:181065724520:web:f72a93869786373c1101dd"
-};
+function loadData(){
+  let votes = JSON.parse(localStorage.getItem("votes")) || [];
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
+  let a=0, b=0, c=0;
+  let html = "";
 
-// 🔐 AUTH GUARD
-firebase.auth().onAuthStateChanged((user) => {
-    if (!user) {
-        window.location.href = "index.html";
-    }
-});
+  votes.forEach(v => {
+    html += v.email + " - " + v.candidate + "<br>";
 
-// 🔐 LOGOUT
-function logout(){
-    firebase.auth().signOut().then(() => {
-        window.location.href = "index.html";
-    });
+    if(v.candidate === "A") a++;
+    if(v.candidate === "B") b++;
+    if(v.candidate === "C") c++;
+  });
+
+  document.getElementById("result").innerHTML =
+    "<h3>Results</h3>" +
+    "A: " + a + "<br>" +
+    "B: " + b + "<br>" +
+    "C: " + c + "<br><br>" +
+    "<h3>Votes List</h3>" +
+    html;
 }
+
+function downloadPDF(){
+  let votes = JSON.parse(localStorage.getItem("votes")) || [];
+
+  let text = "VOTING REPORT\n\n";
+
+  votes.forEach((v,i)=>{
+    text += (i+1)+". "+v.email+" - "+v.candidate+" - "+v.time+"\n";
+  });
+
+  let blob = new Blob([text], {type:"text/plain"});
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "votes.txt";
+  a.click();
+}
+
+loadData();
 </script>
 
 </body>
